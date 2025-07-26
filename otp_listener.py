@@ -12,7 +12,7 @@ main_otp_bots = [
 ]
 
 CHAT_ID1 = "-1002601589640"
-token = "eyJpdiI6ImFtaFc4eXlHcHR5THV4VzlRbTNhNnc9PSIsInZhbHVlIjoiT1RkdERMOEVHUTJjVmJQVUVlRmhVUXpGV0Q2WFJ3T29KVHVrOE56MUlNMVNrY3Y1Zm5yMEw3OTFQMFQ3Ni91clhGbUNvMG5va01RVGU3Sm1BS1JlcG9GcEM2WGI0eDlQclFPT2J1Mlo1NGcyeWdEUy9zcm8rTkJSK0QrSzBQQi9tOHltV2RjRng4a3RsakhHeFhRNzFMam9sTkUwSFJkUEJCNFB1bkhhMjZKVGlxM2ZlK05aSFJpNFIxS25DTFVWdHRxRngxSFQ0UEJtaUNKUEoxdjRRSXB4SitrTXJUekh4ZEtzOWRIMzhLcHUzUU1JdVhGMnEwSFRBV0YwWnpqMFNxMlV2aERacXdHTHVDNEl3NEZ3eXo4dlBRa2hlYVdCWS9kdWwzVmpjZUtCZU9hV21LVCtlazVZR2VYamFFWlhsQzFaaVZyUG1Ic3oxMlVPUU1qeStjS29ueEZ0cDFjMGhlYWg5a1N2WmNnajhhNnBRS251eGlJenVST290S2NYSFc0aEsrTU13OGgzWmo4SVBMbWh3UDFBMjI1SHhuOUNLQmtxL1FublNyNFVZOHBISEp3SFp6WnRFWitLVWtYNC9xNUc1dGpFTzUvVEZtbEp3Z3owbTlMc0hVUEFHTlUyTUFhSDRSVWhkUkNGRWdudEluTTJMa3F2RzBUYlZVR0d3WmdxbG5QUDNDd3ZxWGxDanY1NHZ3PT0iLCJtYWMiOiJlOWE0NGFjNzQ0OGJkZTRiZTAwNjNhYzc0MDJhMjc1NmJiMmU5MjdiMzMxNjY4NWIyOGYyZGIwZDAxMTBkOWFjIiwidGFnIjoiIn0="  # Token shortened for privacy
+token = "eyJpdiI6ImFtaFc4eXlHcHR5THV4VzlRbTNhNnc9PSIsInZhbHVlIjoiT1RkdERMOEVHUTJjVmJQVUVlRmhVUXpGV0Q2WFJ3T29KVHVrOE56MUlNMVNrY3Y1Zm5yMEw3OTFQMFQ3Ni91clhGbUNvMG5va01RVGU3Sm1BS1JlcG9GcEM2WGI0eDlQclFPT2J1Mlo1NGcyeWdEUy9zcm8rTkJSK0QrSzBQQi9tOHltV2RjRng4a3RsakhHeFhRNzFMam9sTkUwSFJkUEJCNFB1bkhhMjZKVGlxM2ZlK05aSFJpNFIxS25DTFVWdHRxRngxSFQ0UEJtaUNKUEoxdjRRSXB4SitrTXJUekh4ZEtzOWRIMzhLcHUzUU1JdVhGMnEwSFRBV0YwWnpqMFNxMlV2aERacXdHTHVDNEl3NEZ3eXo4dlBRa2hlYVdCWS9kdWwzVmpjZUtCZU9hV21LVCtlazVZR2VYamFFWlhsQzFaaVZyUG1Ic3oxMlVPUU1qeStjS29ueEZ0cDFjMGhlYWg5a1N2WmNnajhhNnBRS251eGlJenVST290S2NYSFc0aEsrTU13OGgzWmo4SVBMbWh3UDFBMjI1SHhuOUNLQmtxL1FublNyNFVZOHBISEp3SFp6WnRFWitLVWtYNC9xNUc1dGpFTzUvVEZtbEp3Z3owbTlMc0hVUEFHTlUyTUFhSDRSVWhkUkNGRWdudEluTTJMa3F2RzBUYlZVR0d3WmdxbG5QUDNDd3ZxWGxDanY1NHZ3PT0iLCJtYWMiOiJlOWE0NGFjNzQ0OGJkZTRiZTAwNjNhYzc0MDJhMjc1NmJiMmU5MjdiMzMxNjY4NWIyOGYyZGIwZDAxMTBkOWFjIiwidGFnIjoiIn0="  # তোমার token এখানে বসাও
 
 ws_url = f"wss://ivasms.com:2087/socket.io/?token={requests.utils.quote(token)}&EIO=4&transport=websocket"
 
@@ -89,28 +89,41 @@ async def main():
                 print("🖥️ Connected to IVASMS ✅")
                 while True:
                     data = await ws.recv()
+                    # WebSocket heartbeat or control messages handling
                     if data.startswith("0"):
                         await ws.send("40/livesms,")
                         continue
                     if data == "2":
                         await ws.send("3")
                         continue
+
+                    # Main message handling
+                    # Check if data contains JSON payload starting with '['
                     json_start = data.find("[")
                     if json_start == -1:
+                        # No JSON payload in message, skip
+                        # print("⚠️ Non-JSON message skipped")
                         continue
+
                     json_data_str = data[json_start:]
                     try:
                         payload = json.loads(json_data_str)
                     except json.JSONDecodeError:
+                        # Invalid JSON, skip quietly
+                        # print("⚠️ Invalid JSON skipped")
                         continue
+
                     if len(payload) < 2:
                         continue
+
                     msg = payload[1]
+
                     bd_time = datetime.utcnow().astimezone(pytz.timezone('Asia/Dhaka')).strftime("%d/%m/%Y, %H:%M:%S")
                     recipient = msg.get('recipient', '')
                     country = detect_country(recipient)
                     otp_search = re.search(r"\b\d{4,}\b|\b\d{2,}-\d{2,}\b|\d{2,} \d{2,}\b", msg.get('message', ''))
                     otp = otp_search.group(0) if otp_search else "N/A"
+
                     text = (f"✨ <b>OTP Received</b> ✨\n\n"
                             f"⏰ <b>Time:</b> {bd_time}\n"
                             f"📞 <b>Number:</b> {recipient}\n"
@@ -118,7 +131,9 @@ async def main():
                             f"🔧 <b>Service:</b> {msg.get('originator', 'N/A')}\n\n"
                             f"🔑 <b>OTP:</b> <code>{otp}</code>\n\n"
                             f"<blockquote>{escape_html(msg.get('message', ''))}</blockquote>")
+                    
                     send_telegram("otp", CHAT_ID1, text)
+
         except Exception as e:
             print(f"❌ Connection lost: {e}. Reconnecting in 5 seconds...")
             await asyncio.sleep(5)
